@@ -3,8 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 
 // Import routes
-import postRoutes from './routes/product';
-import orderRoutes from './routes/order';
+import postRoutes from './routes/post';
+import userRoutes from './routes/user';
 
 // Import middleware
 import { notFound, errorHandler } from './middlewares';
@@ -30,8 +30,8 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/products', postRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
