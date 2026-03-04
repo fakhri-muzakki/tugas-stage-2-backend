@@ -15,11 +15,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  password  String
-  email     String   @unique
-  posts     Post[]
+  id       Int    @id @default(autoincrement())
+  name     String
+  password String
+  email    String @unique
+
+  posts    Post[]
+  comments Comment[] // ✅
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -35,9 +38,38 @@ model Post {
   authorId Int  @map("author_id")
   author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
+  comments   Comment[]
+  categories Category[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([authorId])
   @@map("posts")
+}
+
+model Comment {
+  id      Int    @id @default(autoincrement())
+  content String
+
+  userId Int  @map("user_id")
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId Int  @map("post_id")
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, postId]) // saya set 1 user hanya bisa satu komentar pada setiap postnya
+  @@map("comments")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  posts Post[]
+
+  @@map("categories")
 }

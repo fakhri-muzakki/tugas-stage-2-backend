@@ -7,7 +7,34 @@ export const getPosts = async (
   next: NextFunction
 ) => {
   try {
-    const data = await prisma.post.findMany();
+    const categoryQuery = req.query.categories as string | undefined;
+    // /comments-summary?categories=3,2 = [3,2]
+
+    const categoryIds = categoryQuery
+      ? categoryQuery.split(',').map((id) => Number(id))
+      : [];
+
+    const data = await prisma.post.findMany({
+      where: categoryIds.length
+        ? {
+            categories: {
+              some: {
+                id: {
+                  in: categoryIds,
+                },
+              },
+            },
+          }
+        : undefined,
+      include: {
+        categories: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
 
     return res.status(200).json({
       success: true,
@@ -24,6 +51,7 @@ interface PostRequest {
   authorId: string;
   content: string;
   published: 'false' | 'true';
+  categories: string[];
 }
 
 export const createPost = async (
@@ -43,6 +71,9 @@ export const createPost = async (
         published: published,
         author: {
           connect: { id: userId },
+        },
+        categories: {
+          connect: body.categories.map((id: string) => ({ id: Number(id) })),
         },
       },
     });
@@ -92,6 +123,11 @@ export const updatePost = async (
         title: body.title,
         content: body.content,
         published: published,
+        categories: body.categories
+          ? {
+              set: body.categories.map((id: string) => ({ id: Number(id) })),
+            }
+          : undefined,
       },
     });
 
@@ -99,6 +135,84 @@ export const updatePost = async (
       success: true,
       message: 'Post updated successfully',
       data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+interface GetCommentsPostQuery {
+  page: string;
+  limit: string;
+}
+
+export const getCommentsPost = async (
+  req: Request<{ id: string }, object, object, GetCommentsPostQuery>,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const data = await prisma.comment.findMany({
+      skip,
+      take: limit,
+      where: { postId: Number(id) },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Comment post fetched successfully',
+      data,
+      meta: {
+        page,
+        limit,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Mengambil semua comment di group berdasarkan post
+export const getCommentSummary = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const data = await prisma.post.findMany({
+      skip,
+      take: limit,
+      include: {
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Comment summary fetched successfully',
+      data,
+      meta: {
+        page,
+        limit,
+      },
     });
   } catch (error) {
     next(error);
