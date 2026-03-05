@@ -27,7 +27,7 @@ export const errorHandler = (
   if (err instanceof AppError) {
     statusCode = err.statusCode;
     message = err.message;
-    code = 'APP_ERROR';
+    code = err.domainError ?? 'APP_ERROR';
 
     log('Error terjadi:', message);
   } else if (err instanceof SyntaxError && 'body' in err) {

@@ -23,6 +23,7 @@ interface UserRequest {
   name: string;
   email: string;
   password: string;
+  point: string;
 }
 
 export const createUser = async (
@@ -31,12 +32,13 @@ export const createUser = async (
   next: NextFunction
 ) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, point } = req.body;
     const data = await prisma.user.create({
       data: {
         name,
         email,
         password,
+        point: Number(point),
       },
     });
 
@@ -75,7 +77,7 @@ export const updateUser = async (
 ) => {
   try {
     const { id } = req.params;
-    const { name, email, password } = req.body;
+    const { name, email, password, point } = req.body;
 
     const data = await prisma.user.update({
       where: { id: Number(id) },
@@ -83,6 +85,7 @@ export const updateUser = async (
         name,
         email,
         password,
+        point: Number(point) || undefined,
       },
     });
 
