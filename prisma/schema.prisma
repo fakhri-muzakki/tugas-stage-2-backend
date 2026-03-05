@@ -35,7 +35,8 @@ model Product {
   price Decimal @db.Decimal(10, 2)
   stock Int
 
-  orderItems OrderItem[]
+  orderItems         OrderItem[]
+  inventoryMovements InventoryMovement[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -76,4 +77,37 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("order_item")
+}
+
+model Supplier {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String
+  password String
+
+  inventoryMovements InventoryMovement[]
+
+  @@map("suppliers")
+}
+
+model InventoryMovement {
+  id Int @id @default(autoincrement())
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  supplierId Int?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
+  quantity Int
+  type     MovementType
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+enum MovementType {
+  IN
+  OUT
+  ADJUSTMENT
 }
