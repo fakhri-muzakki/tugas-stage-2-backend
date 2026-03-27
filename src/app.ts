@@ -7,12 +7,31 @@ import routes from './routes/index';
 
 // Import middleware
 import { notFound, errorHandler } from './middlewares';
+import { AppError } from './errors/AppError';
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, cb) {
+      if (!origin) {
+        return cb(null, true);
+      }
+
+      if (process.env.ALLOWED_ORIGIN === origin) {
+        cb(null, true);
+      } else {
+        cb(new AppError('Not allowed by CORS', 400));
+      }
+    },
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    maxAge: 86400,
+  })
+);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

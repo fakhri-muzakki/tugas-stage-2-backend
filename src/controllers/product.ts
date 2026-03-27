@@ -1,5 +1,7 @@
 import { type NextFunction, type Request, type Response } from 'express';
 import prisma from '../libs/prisma';
+import { AppError } from '../errors/AppError';
+import { saveToDisk } from '../utils/saveFile';
 
 interface GetProductsQuery {
   page: string;
@@ -129,6 +131,39 @@ export const updateProduct = async (
     return res.status(200).json({
       success: true,
       message: 'Product updated successfully',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { productId } = req.body; // sudah divalidasi middleware validate()
+
+    // Validasi file
+    if (!req.file) {
+      throw new AppError('Image is required', 400);
+    }
+
+    const originalName = req.file.originalname;
+    const filename = `${Date.now()}-${originalName.replace(/\s+/g, '-')}`;
+
+    const data = await prisma.product.update({
+      where: { id: Number(productId) },
+      data: { image: filename },
+    });
+
+    saveToDisk(req.file.buffer, filename);
+
+    return res.status(200).json({
+      success: true,
+      message: 'uploaded image successfully',
       data,
     });
   } catch (error) {

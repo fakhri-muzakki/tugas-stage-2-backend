@@ -5,3 +5,7 @@ export const createProductSchema = Joi.object({
   price: Joi.string().min(1).max(50).allow(null, ''),
   stock: Joi.string().min(1).max(50).allow(null, ''),
 });
+
+export const uploadImageSchema = Joi.object({
+  productId: Joi.string().required(),
+});

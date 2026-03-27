@@ -135,6 +135,13 @@ export const login = async (
       }
     );
 
+    res.cookie('token', accessToken, {
+      httpOnly: true,
+      secure: env.nodeEnv === 'production',
+      sameSite: 'strict',
+      maxAge: 1000 * 60 * 15, // 15 menit
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Login successfully',

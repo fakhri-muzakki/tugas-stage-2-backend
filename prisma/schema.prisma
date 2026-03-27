@@ -34,6 +34,7 @@ model Product {
   name  String
   price Decimal @db.Decimal(10, 2)
   stock Int
+  image String?
 
   orderItems         OrderItem[]
   inventoryMovements InventoryMovement[]
