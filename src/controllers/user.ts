@@ -1,5 +1,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import prisma from '../libs/prisma';
+import { AppError } from '../errors/AppError';
+import { saveToDisk } from '../utils/saveFile';
 
 export const getUsers = async (
   req: Request,
@@ -88,6 +90,41 @@ export const updateUser = async (
     return res.status(200).json({
       success: true,
       message: 'User updated successfully',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadProfilePicture = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { userId } = req.body; // sudah divalidasi middleware validate()
+
+    // Validasi file
+    if (!req.file) {
+      throw new AppError('Image is required', 400);
+    }
+
+    // Semua validasi lolos — baru simpan ke disk
+    const originalname = req.file.originalname;
+    const filename = `${Date.now()}-${originalname.replace(/\s+/g, '-')}`;
+
+    const data = await prisma.user.update({
+      where: { id: Number(userId) },
+      data: { profile: filename },
+      omit: { password: true },
+    });
+
+    saveToDisk(req.file.buffer, filename);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Uploaded image successfully',
       data,
     });
   } catch (error) {
